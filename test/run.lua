@@ -4,8 +4,8 @@ local files = {
   "test.test_smoke",
   "test.test_md5",
   "test.test_url",
+  "test.test_timecode",
   -- append modules as tasks land:
-  -- "test.test_timecode",
   -- "test.test_config", "test.test_paths", "test.test_store",
 }
 for _, mod in ipairs(files) do require(mod) end
