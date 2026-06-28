@@ -7,8 +7,8 @@ local files = {
   "test.test_timecode",
   "test.test_config",
   "test.test_paths",
+  "test.test_store",
   -- append modules as tasks land:
-  -- "test.test_store",
 }
 for _, mod in ipairs(files) do require(mod) end
 require("test.harness").report()
