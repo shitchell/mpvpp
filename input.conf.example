@@ -1,0 +1,12 @@
+# mpvpp reset bindings — add these to ~/.config/mpv/input.conf
+#
+# Resets are explicit and never automatic. mpvpp never clears saved positions on
+# its own (so you can freely toggle `finished_at`); use these when you want to
+# start a rewatch fresh.
+
+# Clear saved progress for every playlist entry in the CURRENT file's folder
+# (the "season"), then restart the current file from the beginning.
+Alt+r script-message mpvpp-reset
+
+# Clear saved progress for ONLY the current file.
+Alt+R script-message mpvpp-reset-file
