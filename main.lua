@@ -58,6 +58,21 @@ local store = storelib.new({
 mp.command_native({ name = "subprocess", playback_only = false,
                     args = { "mkdir", "-p", STATE_DIR } })
 
+-- Is mpv's stdout actually a terminal? The "terminal" property only reflects
+-- the --terminal option (default yes), not whether a tty is attached — so a
+-- detached launch from a file manager would otherwise print the CLI prompt into
+-- a void and pause forever. Resolve mpv's own fd 1 via /proc (Linux). Falls back
+-- to "assume tty" where it can't tell (non-Linux), preserving prior behavior.
+local function detect_stdout_tty()
+  local pid = utils.getpid and utils.getpid()
+  if not pid then return true end
+  local r = mp.command_native({ name = "subprocess", playback_only = false,
+    capture_stdout = true, args = { "readlink", "/proc/" .. pid .. "/fd/1" } })
+  if not r or r.status ~= 0 or not r.stdout or r.stdout == "" then return true end
+  return r.stdout:match("/dev/pts/") ~= nil or r.stdout:match("/dev/tty") ~= nil
+end
+local STDOUT_TTY = detect_stdout_tty()
+
 --------------------------------------------------------------------------------
 -- Config cascade (memoized per run)
 --------------------------------------------------------------------------------
@@ -117,7 +132,10 @@ local cur = nil  -- per-loaded-file context
 --------------------------------------------------------------------------------
 
 local function save_position()
-  if not cur or not cur.cfg.record_position then return end
+  -- prompt_pending: a resume/finished prompt (or its window-settle wait) is up
+  -- and playback is paused on ~frame 0; saving now would clobber the real
+  -- position with ~0 (the very data this tool exists to protect). Skip it.
+  if not cur or not cur.cfg.record_position or cur.prompt_pending then return end
   local pos = mp.get_property_number("time-pos") or cur.last_pos
   if not pos or pos < 0 then return end
   local now = os.time()
@@ -211,8 +229,8 @@ local RESUME_KEYS = {
   B = { action = "beginning", remember = true  },
   m = { toggle = "remember" },
   ENTER = { action = "resume", remember = false },
-  ESC = { action = "resume", remember = false },
-  q = { action = "resume", remember = false },
+  ESC = { quit = true },   -- dismiss = quit mpv (position preserved); not shown as an option
+  q = { quit = true },
 }
 local FINISHED_KEYS = {
   s = { action = "skip",      remember = false },
@@ -221,13 +239,14 @@ local FINISHED_KEYS = {
   B = { action = "beginning", remember = true  },
   m = { toggle = "remember" },
   x = { special = "reset" },
-  ENTER = { action = "skip", remember = false },
-  ESC = { action = "skip", remember = false },
-  q = { action = "skip", remember = false },
+  ENTER = { action = "skip", remember = false },     -- affirmative: Skip is the primary action
+  ESC = { quit = true },   -- dismiss = quit mpv (position preserved); not shown as an option
+  q = { quit = true },
 }
 
 local BINDING_PREFIX = "mpvpp-prompt-"
 local active_overlay = nil
+local active_dismiss = nil  -- teardown for the currently-showing/pending prompt (if any)
 
 local function ass_escape(s) return (s:gsub("\\", "\\\\"):gsub("{", "\\{"):gsub("}", "\\}")) end
 
@@ -262,7 +281,7 @@ end
 -- "osd", "cli", or "none" (cli wanted but no terminal attached).
 local function pick_channel(cfg)
   if cfg.cli_prompt_only or not mp.get_property_bool("vo-configured") then
-    if mp.get_property_bool("terminal") then return "cli" else return "none" end
+    if mp.get_property_bool("terminal") and STDOUT_TTY then return "cli" else return "none" end
   end
   return "osd"
 end
@@ -271,46 +290,91 @@ end
 local function show_prompt(spec)
   local state = { remember = false }
   local bound = {}
+  local shown = false                       -- has present() run (bindings + pause)?
+  local settled, observer, timer = false, nil, nil
 
-  local function unbind()
+  -- Fully dismiss the prompt: cancel any pending window-settle wait, drop key
+  -- bindings + overlay, and unpause only if we had paused. Safe to call in any
+  -- phase (waiting OR shown), and idempotent.
+  local function teardown()
+    settled = true
+    if observer then mp.unobserve_property(observer); observer = nil end
+    if timer then timer:kill(); timer = nil end
     for _, name in ipairs(bound) do mp.remove_key_binding(name) end
     bound = {}
     clear_render()
-    mp.set_property_bool("pause", false)
+    if cur then cur.prompt_pending = false end
+    if shown then mp.set_property_bool("pause", false) end
+    active_dismiss = nil
   end
 
   local function resolve(action, remember)
-    unbind()
     if remember then
       if spec.kind == "resume" then session.progress_action = action
       else session.finished_action = action end
     end
-    spec.resolve(action)
+    spec.resolve(action)  -- act (e.g. seek) while still paused...
+    teardown()            -- ...then drop bindings + unpause (avoids a frame-0 flash)
   end
 
   local function on_key(entry)
     if entry.toggle then
       state.remember = not state.remember
       render(spec, state)
+    elseif entry.quit then
+      -- Quit WITHOUT tearing down: leaving prompt_pending set means the shutdown
+      -- save is suppressed, so the saved position is preserved exactly as-is.
+      mp.commandv("quit")
     elseif entry.special == "reset" then
-      unbind(); reset_folder()
+      teardown(); reset_folder()
     elseif entry.action then
       resolve(entry.action, entry.remember)
     end
   end
 
-  spec.channel = pick_channel(spec.cfg)
-  if spec.channel == "none" then
-    return spec.no_ui()  -- nowhere to prompt
+  local function present()
+    spec.channel = pick_channel(spec.cfg)
+    if spec.channel == "none" then
+      teardown()
+      return spec.no_ui()  -- nowhere to prompt
+    end
+    shown = true
+    mp.set_property_bool("pause", true)
+    for key, entry in pairs(spec.keymap) do
+      local name = BINDING_PREFIX .. key
+      bound[#bound + 1] = name
+      mp.add_forced_key_binding(key, name, function() on_key(entry) end)
+    end
+    render(spec, state)
   end
 
-  mp.set_property_bool("pause", true)
-  for key, entry in pairs(spec.keymap) do
-    local name = BINDING_PREFIX .. key
-    bound[#bound + 1] = name
-    mp.add_forced_key_binding(key, name, function() on_key(entry) end)
+  -- Register teardown immediately so a file reload during EITHER the settle wait
+  -- or the shown prompt tears this down (prevents orphaned bindings/overlay and
+  -- stale-closure crashes). Suppress saves for the whole pending window (C1).
+  if active_dismiss then active_dismiss() end
+  active_dismiss = teardown
+  if cur then cur.prompt_pending = true end
+
+  -- The video window's VO isn't configured yet at file-loaded (mpv creates it a
+  -- frame later), so deciding OSD-vs-terminal right now would wrongly pick the
+  -- terminal for video. Wait for "vo-configured" to settle first. Pure audio
+  -- (no video track) and cli_prompt_only have no window to wait for -> decide now.
+  if spec.cfg.cli_prompt_only
+     or mp.get_property_bool("vo-configured")
+     or mp.get_property("vid") == "no" then
+    return present()
   end
-  render(spec, state)
+
+  local function settle()
+    if settled then return end
+    settled = true
+    if observer then mp.unobserve_property(observer); observer = nil end
+    if timer then timer:kill(); timer = nil end
+    present()
+  end
+  observer = function(_, val) if val then settle() end end
+  mp.observe_property("vo-configured", "bool", observer)
+  timer = mp.add_timeout(1.0, settle)  -- fallback: no window ever appeared
 end
 
 --------------------------------------------------------------------------------
@@ -379,6 +443,7 @@ end
 --------------------------------------------------------------------------------
 
 local function on_file_loaded()
+  if active_dismiss then active_dismiss() end  -- tear down a prompt left up from the previous file
   cur = nil
   local id = media_identity()
   if not id then return end

@@ -41,8 +41,8 @@ cover art), and a yt-dlp URL (e.g. a YouTube link).
     terminal reprints); committing with remember on sets session memory. `R`/`B` commit +
     remember in one press. Next playlist entry auto-applies the remembered resume choice
     without prompting.
-11. 👁 **Dismiss** — `Esc` / `q` dismisses the prompt as the safe default (resume), without
-    setting session memory.
+11. 👁 **Esc/q quits** — `Esc` or `q` at either prompt quits mpv, and the saved position is
+    **preserved** (next launch still offers the same resume point — not reset to 0).
 
 ## Prompt — finished
 

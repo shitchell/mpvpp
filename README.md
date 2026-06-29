@@ -87,6 +87,8 @@ When a media is already finished:
 "Remember for this session" applies only to the current mpv process (e.g. the rest of a
 playlist), and is tracked separately for resume vs finished decisions.
 
+`Esc` or `q` at either prompt quits mpv, leaving your saved position untouched.
+
 ## Reset (rewatch)
 
 mpvpp never clears saved positions automatically. To start a rewatch fresh, use the

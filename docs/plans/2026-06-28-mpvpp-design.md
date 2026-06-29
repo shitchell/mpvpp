@@ -241,7 +241,10 @@ fast accelerators; "i might change my mind later" → keep it modular).
 - `m` toggles the "Remember for session" checkbox (overlay re-renders; terminal reprints
   the toggle line) — the common case is one keystroke (`r`/`b`/`s`), remember is opt-in.
 - Capital accelerators commit action **+ remember** in one press (`R`/`B`/`S`).
-- `Esc` / `q` dismisses → treated as the safe default (resume / no skip), no session memory.
+- `Esc` / `q` **quit mpv** (not shown as a prompt option). The saved position is
+  preserved exactly as-is — the quit deliberately does *not* tear the prompt down, so
+  `prompt_pending` stays set and the shutdown save is suppressed (no clobber to ~0).
+  *(Supersedes the original "dismiss = safe default (resume/no-skip)" decision — see appendix.)*
 - While the prompt is up, mpv is **paused on the first frame**; playback does not advance
   until a choice is made.
 
@@ -407,3 +410,4 @@ open. ("we can play with it as we go.")
 | Rewatch | Model A explicit reset; Model B deferred | Accepted | "i think the rewatch option is reasonable :) and we can play with it as we go if needed" |
 | `last_watch_timestamp` | Store now for future cursor | Accepted | "can we save one more piece of metadata to potentially play with in the future? last_watch_timestamp, epoch" |
 | Project home | Standalone repo + dotfiles submodule | Accepted | "standalone repo + submodule in dotfiles" |
+| Esc/q at prompt | Quit mpv (position preserved); not shown as an option. Supersedes "dismiss = safe default". | Accepted | "if i press esc or q at either prompt, i'd like for it to exit :) we don't have to display these as prompt options" |
