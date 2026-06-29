@@ -185,6 +185,10 @@ min_position      = 30         # resume floor; below N sec → no resume prompt,
 # --- finished detection ---
 finished_at       = 97%        # 15s | 2m | 1:30 | 1:02:03 | 97% | 0.97
 
+# --- behavior switches (recording always runs regardless; see record_position) ---
+resume_enabled    = yes        # no → skip resume behavior entirely
+skip_enabled      = yes        # no → skip finished/skip behavior entirely
+
 # --- per-prompt defaults & bypass ---
 # A prompt shows unless show_prompt=no OR its *_bypass=yes; when not shown, its
 # *_default is applied (a remembered session choice still wins).
@@ -416,6 +420,7 @@ open. ("we can play with it as we go.")
 | Never auto-clear | Always store last PP; finished derived | Accepted | "i don't think i ever ever clear the data" |
 | `finished_behavior` → `skip_prompt_default` | Renamed; values `skip`\|`beginning`, default `beginning` | Accepted | skip for TV seasons, restart for finished movies; folded into per-prompt model below |
 | Per-prompt default + bypass | Add `resume_prompt_default`/`resume_prompt_bypass` + `skip_prompt_default`/`skip_prompt_bypass`; a prompt shows unless `show_prompt=no` or its `*_bypass`, else applies `*_default` | Accepted | "can we have an option in the config for each prompt … and automatically select an option? i might consider 4 vars: (resume\|skip)_prompt_default and (resume\|skip)_prompt_bypass" |
+| Behavior switches | `resume_enabled` / `skip_enabled` (default yes); when no, that behavior is fully skipped, but position/metadata recording always runs so it works the moment the flag is re-enabled | Accepted | "can we add a (resume\|skip)_enabled? … if that is set to false, then the whole block for that respective behavior is skipped. BUT, saving playback position and other metadata … should always work no matter what so that our other functionality works as soon as the relevant flags are turned on" |
 | Skip-with-no-next | Fall back to play_from_beginning | Accepted | user picked option A |
 | Rewatch | Model A explicit reset; Model B deferred | Accepted | "i think the rewatch option is reasonable :) and we can play with it as we go if needed" |
 | `last_watch_timestamp` | Store now for future cursor | Accepted | "can we save one more piece of metadata to potentially play with in the future? last_watch_timestamp, epoch" |

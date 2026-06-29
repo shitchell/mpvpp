@@ -472,9 +472,17 @@ local function on_file_loaded()
     play_count = ((saved and saved.play_count) or 0) + 1,
   }
 
+  -- NOTE: cur is set up above and saving runs off the time-pos observer +
+  -- end-file/shutdown (gated only by record_position), so position + metadata are
+  -- always recorded regardless of the *_enabled flags below. Those flags gate only
+  -- the resume/skip *behavior*, so flipping one on later just works immediately.
   if saved and saved.position then
     local finished = tc.near_end(saved.position, cur.duration, tc.parse_finished_at(cfg.finished_at))
-    if finished then handle_finished() else handle_resume() end
+    if finished then
+      if cfg.skip_enabled then handle_finished() end
+    elseif cfg.resume_enabled then
+      handle_resume()
+    end
   end
 end
 

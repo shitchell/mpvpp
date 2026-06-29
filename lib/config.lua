@@ -24,6 +24,12 @@ local SCHEMA = {
   min_position      = { type = "number", default = 30 },
   finished_at       = { type = "string", default = "97%" },
 
+  -- Behavior switches. When false, that whole behavior is skipped (no prompt, no
+  -- action), but position + metadata are STILL recorded (so it works the moment
+  -- the flag is turned back on). Gated separately from record_position.
+  resume_enabled    = { type = "bool", default = true },
+  skip_enabled      = { type = "bool", default = true },
+
   -- Per-prompt control. A prompt shows unless show_prompt=no OR its *_bypass=yes;
   -- when it doesn't show, the matching *_default action is applied (a remembered
   -- session choice still takes priority when set).

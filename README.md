@@ -59,6 +59,8 @@ for every key, documented. Quick reference:
 | `save_interval` | `5` | Write position at most every N seconds (crash safety). |
 | `min_position` | `30` | Don't prompt to resume below N seconds. |
 | `finished_at` | `97%` | "How far from the end is finished": `15s`/`2m`/`1:30`/`97%`/`0.97`. |
+| `resume_enabled` | `yes` | `no` = skip resume behavior entirely (recording still runs). |
+| `skip_enabled` | `yes` | `no` = skip finished/skip behavior entirely (recording still runs). |
 | `resume_prompt_default` | `resume` | When the resume prompt is bypassed: `resume` or `beginning`. |
 | `resume_prompt_bypass` | `no` | Auto-apply `resume_prompt_default` without prompting. |
 | `skip_prompt_default` | `beginning` | When the finished prompt is bypassed: `skip` or `beginning`. |
@@ -67,6 +69,10 @@ for every key, documented. Quick reference:
 A prompt shows unless `show_prompt = no` **or** its own `*_prompt_bypass = yes`; when it
 doesn't show, the matching `*_prompt_default` is applied. (A "remember for this session"
 choice still wins.)
+
+`resume_enabled` / `skip_enabled` gate each behavior entirely — but **recording always
+runs** (unless `record_position = no`), so positions keep accumulating and turning a
+behavior back on works immediately on media you've already watched.
 
 **Per-directory overrides:** drop a `.mpvpp.conf` in any media folder to override just those
 keys for everything under it — e.g. `finished_at = 30s` in a `Shows/` folder, `97%` in
