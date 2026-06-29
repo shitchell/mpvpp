@@ -53,13 +53,20 @@ for every key, documented. Quick reference:
 | Key | Default | Meaning |
 |---|---|---|
 | `record_position` | `yes` | Master switch; `no` = fully inert for this media. |
-| `show_prompt` | `yes` | Show the prompt, or act silently. |
+| `show_prompt` | `yes` | Global: show prompts, or act silently (bypasses both). |
 | `cli_prompt_only` | `no` | Force the terminal prompt even when a window exists. |
 | `no_ui_fallback` | `resume` | Terminal wanted but no terminal: `resume`/`beginning`/`force_window`. |
 | `save_interval` | `5` | Write position at most every N seconds (crash safety). |
 | `min_position` | `30` | Don't prompt to resume below N seconds. |
 | `finished_at` | `97%` | "How far from the end is finished": `15s`/`2m`/`1:30`/`97%`/`0.97`. |
-| `finished_behavior` | `play_from_beginning` | When finished: `skip` or `play_from_beginning`. |
+| `resume_prompt_default` | `resume` | When the resume prompt is bypassed: `resume` or `beginning`. |
+| `resume_prompt_bypass` | `no` | Auto-apply `resume_prompt_default` without prompting. |
+| `skip_prompt_default` | `beginning` | When the finished prompt is bypassed: `skip` or `beginning`. |
+| `skip_prompt_bypass` | `no` | Auto-apply `skip_prompt_default` without prompting. |
+
+A prompt shows unless `show_prompt = no` **or** its own `*_prompt_bypass = yes`; when it
+doesn't show, the matching `*_prompt_default` is applied. (A "remember for this session"
+choice still wins.)
 
 **Per-directory overrides:** drop a `.mpvpp.conf` in any media folder to override just those
 keys for everything under it — e.g. `finished_at = 30s` in a `Shows/` folder, `97%` in

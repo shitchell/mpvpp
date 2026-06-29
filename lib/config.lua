@@ -23,8 +23,16 @@ local SCHEMA = {
   save_interval     = { type = "number", default = 5 },
   min_position      = { type = "number", default = 30 },
   finished_at       = { type = "string", default = "97%" },
-  finished_behavior = { type = "enum",  default = "play_from_beginning",
-                        values = { skip = true, play_from_beginning = true } },
+
+  -- Per-prompt control. A prompt shows unless show_prompt=no OR its *_bypass=yes;
+  -- when it doesn't show, the matching *_default action is applied (a remembered
+  -- session choice still takes priority when set).
+  resume_prompt_default = { type = "enum", default = "resume",
+                            values = { resume = true, beginning = true } },
+  resume_prompt_bypass  = { type = "bool", default = false },
+  skip_prompt_default   = { type = "enum", default = "beginning",
+                            values = { skip = true, beginning = true } },
+  skip_prompt_bypass    = { type = "bool", default = false },
 }
 
 -- Truthy/falsey token sets for bool coercion. Kept deliberately small and

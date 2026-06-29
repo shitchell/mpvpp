@@ -174,7 +174,7 @@ key = value
 ```ini
 # --- recording & prompting ---
 record_position   = yes        # master switch: record positions at all?
-show_prompt       = yes        # show prompts, or act silently (resume / handle)
+show_prompt       = yes        # global: show prompts, or act silently (bypasses both)
 cli_prompt_only   = no         # force terminal prompt even when a window exists
 no_ui_fallback    = resume     # audio + no terminal: resume | force_window | beginning
 
@@ -182,9 +182,16 @@ no_ui_fallback    = resume     # audio + no terminal: resume | force_window | be
 save_interval     = 5          # throttle: write position at most every N seconds
 min_position      = 30         # resume floor; below N sec → no resume prompt, start at 0
 
-# --- finished detection & handling ---
+# --- finished detection ---
 finished_at       = 97%        # 15s | 2m | 1:30 | 1:02:03 | 97% | 0.97
-finished_behavior = play_from_beginning   # skip | play_from_beginning
+
+# --- per-prompt defaults & bypass ---
+# A prompt shows unless show_prompt=no OR its *_bypass=yes; when not shown, its
+# *_default is applied (a remembered session choice still wins).
+resume_prompt_default = resume      # resume | beginning
+resume_prompt_bypass  = no
+skip_prompt_default   = beginning   # skip | beginning  (replaces old finished_behavior)
+skip_prompt_bypass    = no
 ```
 
 ---
@@ -407,7 +414,8 @@ open. ("we can play with it as we go.")
 | Remember-for-session | Toggle checkbox + capital accelerators, per-state | Accepted | "(Resume \|\| Beginning) && (Remember for Session)"; "i might change my mind later lol, so it should either be dead simple code … or … modular" |
 | `finished_at` | Single shape-parsed knob; default `97%` | Accepted | "one setting to handle the 'how far from the end' config, and then we handle percentage vs static time in the code" |
 | Never auto-clear | Always store last PP; finished derived | Accepted | "i don't think i ever ever clear the data" |
-| `finished_behavior` | `skip` \| `play_from_beginning`; default latter | Accepted | skip for TV seasons, restart for finished movies |
+| `finished_behavior` → `skip_prompt_default` | Renamed; values `skip`\|`beginning`, default `beginning` | Accepted | skip for TV seasons, restart for finished movies; folded into per-prompt model below |
+| Per-prompt default + bypass | Add `resume_prompt_default`/`resume_prompt_bypass` + `skip_prompt_default`/`skip_prompt_bypass`; a prompt shows unless `show_prompt=no` or its `*_bypass`, else applies `*_default` | Accepted | "can we have an option in the config for each prompt … and automatically select an option? i might consider 4 vars: (resume\|skip)_prompt_default and (resume\|skip)_prompt_bypass" |
 | Skip-with-no-next | Fall back to play_from_beginning | Accepted | user picked option A |
 | Rewatch | Model A explicit reset; Model B deferred | Accepted | "i think the rewatch option is reasonable :) and we can play with it as we go if needed" |
 | `last_watch_timestamp` | Store now for future cursor | Accepted | "can we save one more piece of metadata to potentially play with in the future? last_watch_timestamp, epoch" |

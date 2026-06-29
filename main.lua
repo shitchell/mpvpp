@@ -400,9 +400,9 @@ end
 
 local function handle_finished()
   local cfg = cur.cfg
-  if not cfg.show_prompt or session.finished_action then
-    apply_finished(session.finished_action or cfg.finished_behavior)
-    return
+  if session.finished_action then apply_finished(session.finished_action); return end
+  if (not cfg.show_prompt) or cfg.skip_prompt_bypass then
+    apply_finished(cfg.skip_prompt_default); return
   end
   show_prompt({
     kind = "finished",
@@ -412,7 +412,7 @@ local function handle_finished()
     keymap = FINISHED_KEYS,
     show_remember = (mp.get_property_number("playlist-count") or 1) > 1,
     cfg = cfg,
-    no_ui = function() apply_finished(cfg.finished_behavior) end,
+    no_ui = function() apply_finished(cfg.skip_prompt_default) end,
     resolve = apply_finished,
   })
 end
@@ -424,8 +424,10 @@ end
 local function handle_resume()
   local cfg, saved = cur.cfg, cur.saved
   if saved.position < cfg.min_position then return end          -- below floor -> just play
-  if not cfg.show_prompt then do_resume(saved.position); return end
   if session.progress_action then apply_resume(session.progress_action); return end
+  if (not cfg.show_prompt) or cfg.resume_prompt_bypass then
+    apply_resume(cfg.resume_prompt_default); return
+  end
 
   local function no_ui()
     local fb = cfg.no_ui_fallback
