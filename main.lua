@@ -252,14 +252,18 @@ local function ass_escape(s) return (s:gsub("\\", "\\\\"):gsub("{", "\\{"):gsub(
 
 local function render(spec, state)
   local check = state.remember and "[x]" or "[ ]"
+  -- "Remember for this session" only matters across a multi-entry playlist; with
+  -- a single item there's nothing later to apply it to, so omit it entirely.
   if spec.channel == "osd" then
     local lines = {
       "{\\fs30}" .. ass_escape(spec.title),
       "",
       "{\\fs22}" .. ass_escape(spec.line1),
-      "{\\fs22}[m] Remember for this session   " .. check,
     }
     if spec.line_extra then lines[#lines + 1] = "{\\fs22}" .. ass_escape(spec.line_extra) end
+    if spec.show_remember then
+      lines[#lines + 1] = "{\\fs22}[m] Remember for this session   " .. check
+    end
     if not active_overlay then active_overlay = mp.create_osd_overlay("ass-events") end
     active_overlay.data = "{\\an5}{\\bord2}" .. table.concat(lines, "\\N")
     active_overlay:update()
@@ -268,7 +272,9 @@ local function render(spec, state)
     io.write("\n  " .. spec.title .. "\n")
     io.write("    " .. spec.line1 .. "\n")
     if spec.line_extra then io.write("    " .. spec.line_extra .. "\n") end
-    io.write("    [m] Remember for this session   " .. check .. "\n")
+    if spec.show_remember then
+      io.write("    [m] Remember for this session   " .. check .. "\n")
+    end
     io.flush()
   end
 end
@@ -341,9 +347,12 @@ local function show_prompt(spec)
     shown = true
     mp.set_property_bool("pause", true)
     for key, entry in pairs(spec.keymap) do
-      local name = BINDING_PREFIX .. key
-      bound[#bound + 1] = name
-      mp.add_forced_key_binding(key, name, function() on_key(entry) end)
+      -- skip the remember keys (m toggle, capital accelerators) for a lone item
+      if spec.show_remember or not (entry.toggle or entry.remember) then
+        local name = BINDING_PREFIX .. key
+        bound[#bound + 1] = name
+        mp.add_forced_key_binding(key, name, function() on_key(entry) end)
+      end
     end
     render(spec, state)
   end
@@ -401,6 +410,7 @@ local function handle_finished()
     line1 = "[s] Skip        [b] Play from beginning",
     line_extra = "[x] rewatch (clear this folder's progress)",
     keymap = FINISHED_KEYS,
+    show_remember = (mp.get_property_number("playlist-count") or 1) > 1,
     cfg = cfg,
     no_ui = function() apply_finished(cfg.finished_behavior) end,
     resolve = apply_finished,
@@ -432,6 +442,7 @@ local function handle_resume()
     title = "⏵ Resume from " .. tc.format_hms(saved.position) .. "?",
     line1 = "[r] Resume        [b] Play from beginning",
     keymap = RESUME_KEYS,
+    show_remember = (mp.get_property_number("playlist-count") or 1) > 1,
     cfg = cfg,
     no_ui = no_ui,
     resolve = apply_resume,

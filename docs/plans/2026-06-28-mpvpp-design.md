@@ -240,6 +240,8 @@ fast accelerators; "i might change my mind later" → keep it modular).
 
 - `m` toggles the "Remember for session" checkbox (overlay re-renders; terminal reprints
   the toggle line) — the common case is one keystroke (`r`/`b`/`s`), remember is opt-in.
+- The remember line + its keys (`m`, `R`/`B`/`S`) are shown only when `playlist-count > 1`;
+  with a single item there is nothing later to remember for, so they're omitted.
 - Capital accelerators commit action **+ remember** in one press (`R`/`B`/`S`).
 - `Esc` / `q` **quit mpv** (not shown as a prompt option). The saved position is
   preserved exactly as-is — the quit deliberately does *not* tear the prompt down, so

@@ -87,6 +87,9 @@ When a media is already finished:
 "Remember for this session" applies only to the current mpv process (e.g. the rest of a
 playlist), and is tracked separately for resume vs finished decisions.
 
+The "Remember for this session" toggle only appears when the playlist has more than one
+entry (with a single file there's nothing later to apply it to).
+
 `Esc` or `q` at either prompt quits mpv, leaving your saved position untouched.
 
 ## Reset (rewatch)
