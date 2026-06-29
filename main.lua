@@ -135,7 +135,7 @@ local function save_position()
   -- prompt_pending: a resume/finished prompt (or its window-settle wait) is up
   -- and playback is paused on ~frame 0; saving now would clobber the real
   -- position with ~0 (the very data this tool exists to protect). Skip it.
-  if not cur or not cur.cfg.record_position or cur.prompt_pending then return end
+  if not cur or not cur.cfg.record_position or cur.prompt_pending or cur.suppress_save then return end
   local pos = mp.get_property_number("time-pos") or cur.last_pos
   if not pos or pos < 0 then return end
   local now = os.time()
@@ -174,16 +174,11 @@ local function do_beginning()
   -- mpv already starts at 0; nothing to do.
 end
 
--- returns true if it advanced, false if there was no next entry
-local function do_skip()
+-- true if there's a later playlist entry to advance to
+local function has_next()
   local pos = mp.get_property_number("playlist-pos") or 0
   local count = mp.get_property_number("playlist-count") or 1
-  if pos < count - 1 then
-    msg.verbose("skipping finished entry")
-    mp.commandv("playlist-next", "force")
-    return true
-  end
-  return false
+  return pos < count - 1
 end
 
 --------------------------------------------------------------------------------
@@ -391,10 +386,16 @@ end
 --------------------------------------------------------------------------------
 
 local function apply_finished(action)
-  if action == "skip" then
-    if not do_skip() then do_beginning() end  -- no next entry -> restart
+  if action == "skip" and has_next() then
+    -- Don't clobber this finished item's saved position when we leave it, and
+    -- DEFER the playlist advance to after the file-loaded handler returns:
+    -- issuing playlist-next synchronously during file-loaded is unreliable,
+    -- especially for large files still initializing (the command gets dropped).
+    if cur then cur.suppress_save = true end
+    msg.verbose("skipping finished entry")
+    mp.add_timeout(0, function() mp.commandv("playlist-next", "force") end)
   else
-    do_beginning()
+    do_beginning()  -- skip with no next entry -> restart; or action == "beginning"
   end
 end
 
