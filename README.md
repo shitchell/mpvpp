@@ -19,7 +19,7 @@ built-in APIs).
   `mpv "Season 02"`) or **restart** it. Never auto-clears, so you can re-tune `finished_at`
   any time; start a rewatch with an explicit reset.
 - **Layered config** — built-in defaults → `~/.config/mpvpp/config.conf` → a per-directory
-  `mpvpp.conf` cascade (closest to the media wins). Flat `key = value`, no dependencies.
+  `.mpvpp.conf` cascade (closest to the media wins). Flat `key = value`, no dependencies.
 
 ## Install
 
@@ -61,7 +61,7 @@ for every key, documented. Quick reference:
 | `finished_at` | `97%` | "How far from the end is finished": `15s`/`2m`/`1:30`/`97%`/`0.97`. |
 | `finished_behavior` | `play_from_beginning` | When finished: `skip` or `play_from_beginning`. |
 
-**Per-directory overrides:** drop an `mpvpp.conf` in any media folder to override just those
+**Per-directory overrides:** drop a `.mpvpp.conf` in any media folder to override just those
 keys for everything under it — e.g. `finished_at = 30s` in a `Shows/` folder, `97%` in
 `Lectures/`. The folder closest to the file wins.
 

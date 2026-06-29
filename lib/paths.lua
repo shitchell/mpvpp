@@ -4,7 +4,7 @@
 -- effects. POSIX-style `/` paths (that's all mpv hands us on this Linux box).
 -- Used by main.lua to turn an mpv filename into an absolute normalized path
 -- (hashed into a store key), the list of ancestor directories to walk for the
--- per-directory `mpvpp.conf` cascade, and the store filename for a hash.
+-- per-directory `.mpvpp.conf` cascade, and the store filename for a hash.
 
 local M = {}
 

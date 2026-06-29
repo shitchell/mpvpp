@@ -59,10 +59,10 @@ cover art), and a yt-dlp URL (e.g. a YouTube link).
 ## Config cascade
 
 16. ✅ **User config applied** — `~/.config/mpvpp/config.conf` keys take effect.
-17. ✅ **Per-directory override** — an `mpvpp.conf` in the media folder overrides user config
+17. ✅ **Per-directory override** — a `.mpvpp.conf` in the media folder overrides user config
     (verified: user `finished_at = 20%` → finished; folder `90%` → resumes instead).
 18. ✅ **Unknown key / bad value** → logged as a warning, ignored (prior value kept).
-19. 👁 **Closest-wins across multiple levels** — nested `mpvpp.conf` files; the one nearest
+19. 👁 **Closest-wins across multiple levels** — nested `.mpvpp.conf` files; the one nearest
     the media wins. (Logic unit-tested; 👁 optional end-to-end spot check.)
 
 ## Sources

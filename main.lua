@@ -22,7 +22,7 @@ local storelib = require("lib.store")
 -- Constants (tweak here)
 --------------------------------------------------------------------------------
 
-local CONF_NAME = "mpvpp.conf"
+local CONF_NAME = ".mpvpp.conf"
 local HOME = os.getenv("HOME") or ""
 local USER_CONF = (os.getenv("XDG_CONFIG_HOME") or (HOME .. "/.config")) .. "/mpvpp/config.conf"
 local STATE_DIR = (os.getenv("XDG_STATE_HOME") or (HOME .. "/.local/state")) .. "/mpvpp"

@@ -138,13 +138,13 @@ later file overrides only the keys it sets.
 For `file = /path/to/some/movie.mkv`, load in order (missing = no-op):
 
 ```
-/mpvpp.conf
-/path/mpvpp.conf
-/path/to/mpvpp.conf
-/path/to/some/mpvpp.conf      ← immediate parent, highest priority
+/.mpvpp.conf
+/path/.mpvpp.conf
+/path/to/.mpvpp.conf
+/path/to/some/.mpvpp.conf      ← immediate parent, highest priority
 ```
 
-- **Config filename in media dirs:** `mpvpp.conf`. **User base:** `~/.config/mpvpp/config.conf`.
+- **Config filename in media dirs:** `.mpvpp.conf`. **User base:** `~/.config/mpvpp/config.conf`.
   Both tweakable via constants at the top of the script.
 - **URLs have no directory path** → they get levels 1–2 only (defaults + user config).
 - **Walk scope:** filesystem root `/` down to parent; stat each, load what exists.
